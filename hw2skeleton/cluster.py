@@ -10,7 +10,9 @@ def compute_similarity(site_a, site_b):
     Input: two ActiveSite instances
     Output: the similarity between them (a floating point number)
     """
-    similarity = random.randint(0,20)
+    shape_a = site_a.get_shape()
+    shape_b = site_b.get_shape()
+    similarity = np.sqrt((shape_a[0]-shape_b[0])**2+(shape_a[1]-shape_b[1])**2+(shape_a[2]-shape_b[2])**2)
 
     return similarity
 
