@@ -1,4 +1,5 @@
 # Some utility classes to represent a PDB structure
+import numpy as np
 
 class Atom:
     """
@@ -26,6 +27,11 @@ class Residue:
     # Overload the __repr__ operator to make printing simpler.
     def __repr__(self):
         return "{0} {1}".format(self.type, self.number)
+    # find and return the alpha carbon for the residue
+    def get_ca(self):
+        for atom in self.atoms:
+            if atom.type == "CA":
+                return atom
 
 class ActiveSite:
     """
@@ -39,3 +45,22 @@ class ActiveSite:
     # Overload the __repr__ operator to make printing simpler.
     def __repr__(self):
         return self.name
+    # Find the length,width,height of the active site
+    def get_shape(self):
+        x_coords = list()
+        y_coords = list()
+        z_coords = list()
+        for residue in self.residues:
+            ca = residue.get_ca()
+            x_coords.append(ca.coords[0])
+            y_coords.append(ca.coords[1])
+            z_coords.append(ca.coords[2])
+        length = max(x_coords) - min(x_coords)
+        width = max(y_coords) - min(y_coords)
+        height = max(z_coords) - min(z_coords)
+        return (length,width,height)
+        
+        
+        
+        
+        

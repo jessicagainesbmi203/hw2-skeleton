@@ -12,7 +12,7 @@ active_sites = read_active_sites(sys.argv[2])
 # Choose clustering algorithm
 if sys.argv[1][0:2] == '-P':
     print("Clustering using Partitioning method")
-    clustering = cluster_by_partitioning(active_sites)
+    clustering = cluster_by_partitioning(active_sites, 2)
     write_clustering(sys.argv[3], clustering)
 
 if sys.argv[1][0:2] == '-H':

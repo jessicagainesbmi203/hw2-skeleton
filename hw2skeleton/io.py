@@ -46,7 +46,7 @@ def read_active_site(filepath):
         for line in f:
             if line[0:3] != 'TER':
                 # read in an atom
-                atom_type = line[13:17].strip()
+                atom_type = line[13:16].strip()
                 x_coord = float(line[30:38])
                 y_coord = float(line[38:46])
                 z_coord = float(line[46:54])
