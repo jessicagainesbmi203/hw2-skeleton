@@ -96,6 +96,59 @@ def cluster_hierarchically(active_sites):
     Output: a list of clusterings
             (each clustering is a list of lists of Sequence objects)
     """
-
-    # Fill in your code here!
-    return []
+    # initialize
+    
+    clusters = list()
+    for site in active_sites:
+        site_list = list()
+        site_list.append(site)
+        clusters.append(site_list)
+    # cluster
+    
+    # continue until there is one large cluster
+    while(len(clusters) > 1):
+        # keep track of which clusters are closest to each other, index of each cluster and similarity
+        closest = {'i':0,'j':0,'avg_sim':np.inf}
+        # compare each pair of clusters
+        for i in range(0,len(clusters),1):
+            for j in range(0,len(clusters),1):
+                if i == j:
+                    break
+                cluster_sims = list()
+                # within each cluster, compare each active site and average the similarity
+                for site_a in flatten(clusters[i]):
+                    for site_b in flatten(clusters[j]):
+                        print(site_a)
+                        print(site_b)
+                        sim = compute_similarity(site_a,site_b)
+                        cluster_sims.append(sim)
+                avg_sim = np.mean(cluster_sims)
+                # if a pair of clusters is closer than the current closest, update closest
+                if avg_sim < closest['avg_sim']:
+                    closest['i'] = i
+                    closest['j'] = j
+                    closest['avg_sim'] = avg_sim
+        # after examining all pairs of clusters, merge the closest ones
+        agglomerate = list()
+        agglomerate.append(clusters[closest['i']])
+        agglomerate.append(clusters[closest['j']])
+        clusters.pop(closest['i'])
+        clusters.pop(closest['j'])
+        clusters.append(agglomerate)
+    print(clusters)
+    print(flatten(clusters[-1]))
+    return []  
+    
+def flatten(l):
+    flattened_list = list()
+    #if ~isinstance(l,list):
+    #    flattened_list.append(l)
+    #else:
+    new_list = l.copy()
+    for item in new_list:
+        if not isinstance(item,list):
+            flattened_list.append(item)
+        else:
+            flattened_list.extend(flatten(item))
+            print(flattened_list)
+    return flattened_list
