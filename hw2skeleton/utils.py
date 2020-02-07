@@ -59,9 +59,6 @@ class ActiveSite:
         width = max(y_coords) - min(y_coords)
         height = max(z_coords) - min(z_coords)
         return (length,width,height)
-        
-        
-        
-        
-        
+
+
         

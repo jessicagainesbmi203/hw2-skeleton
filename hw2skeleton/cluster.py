@@ -20,7 +20,7 @@ def compute_similarity(site_a, site_b):
 def cluster_by_partitioning(active_sites,klist):
     """
     Cluster a given set of ActiveSite instances using k means.
-    Try k = klist and return the one with the smallest average silhouette
+    Try k = klist and return the one with the best average silhouette
         score over 100 tries.
 
     Input: a list of ActiveSite instances
@@ -35,11 +35,11 @@ def cluster_by_partitioning(active_sites,klist):
         for i in range(n_trials):
             s = silhouette_score(do_partitioning_cluster(active_sites,k))
             score_keeper[k] = score_keeper.get(k) + (s/n_trials)
-    minimum = np.inf
+    maximum = 0
     n_clusters = 0
     for k in score_keeper.keys():
-        if score_keeper.get(k) < minimum:
-            minimum = score_keeper.get(k)
+        if score_keeper.get(k) > maximum:
+            maximum = score_keeper.get(k)
             n_clusters = k
     print(score_keeper)
     return do_partitioning_cluster(active_sites,n_clusters)
@@ -126,7 +126,7 @@ def do_partitioning_cluster(active_sites,k):
 def cluster_hierarchically(active_sites,klist):
     """
     Cluster the given set of ActiveSite instances using a hierarchical algorithm. 
-    Test several values of k and choose the one with the lowest silhouette score.
+    Test several values of k and choose the one with the best silhouette score.
 
     Input: a list of ActiveSite instances
     Output: a list of clusterings
@@ -138,14 +138,13 @@ def cluster_hierarchically(active_sites,klist):
     for k in klist:
         s = silhouette_score(do_hierarchical_cluster(active_sites,k))
         score_keeper[k] = s
-    minimum = np.inf
+    maximum = 0
     n_clusters = 0
     for k in score_keeper.keys():
-        if score_keeper.get(k) < minimum:
-            minimum = score_keeper.get(k)
+        if score_keeper.get(k) > maximum:
+            maximum = score_keeper.get(k)
             n_clusters = k
     print(score_keeper)
-    print(n_clusters)
     return do_hierarchical_cluster(active_sites,n_clusters)
     
 def do_hierarchical_cluster(active_sites, k):
@@ -210,6 +209,13 @@ def flatten(l):
     return flattened_list
 
 def silhouette_score(clustering):
+    """
+    Measure the success of the clustering. Average over all active sites
+        how similar they are to other active sites in the cluster, and how 
+        different they are from active sites in other clusters.
+    Input: clustering, a list of lists of active sites
+    Output: silhouette score, a number from 0 to 1 where 1 is perfect clustering
+    """
     silhouette_list = list()
     for cluster in clustering:
         if (len(flatten(cluster)) <= 1):
@@ -237,24 +243,21 @@ def silhouette_score(clustering):
     mean_silhouette = np.mean(silhouette_list)
     return mean_silhouette
             
-def jaccaard_index(clustering1,clustering2):
-    return 0
+def jaccard_index(clustering1,clustering2):
+    """
+    Compare two sets of two clusters each, with a number 0 to 1 where 1 is most similar
+    Inputs: clustering1 : list of two lists of active sites
+            clustering2 : list of two lists of active sites
+    Outputs: jaccard index, a measurement of the similarity of the two clusterings
+    """
+    M00 = set(flatten(clustering1[0])).intersection(set(flatten(clustering2[0])))
+    M10 = set(flatten(clustering1[1])).intersection(set(flatten(clustering2[0])))
+    M01 = set(flatten(clustering1[0])).intersection(set(flatten(clustering2[1])))
+    M11 = set(flatten(clustering1[1])).intersection(set(flatten(clustering2[1])))
+    jaccard = len(M11) / (len(M01) + len(M10) + len(M11))
+    return jaccard
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
