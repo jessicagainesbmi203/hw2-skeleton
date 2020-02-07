@@ -238,7 +238,7 @@ def silhouette_score(clustering):
     return mean_silhouette
             
 def jaccaard_index(clustering1,clustering2):
-    
+    return 0
 
 
 
