@@ -12,6 +12,7 @@ def compute_similarity(site_a, site_b):
     """
     shape_a = site_a.get_shape()
     shape_b = site_b.get_shape()
+    # Euclidean distance between points on three variables: length, width, height
     similarity = np.sqrt((shape_a[0]-shape_b[0])**2+(shape_a[1]-shape_b[1])**2+(shape_a[2]-shape_b[2])**2)
 
     return similarity
@@ -32,11 +33,13 @@ def cluster_by_partitioning(active_sites,klist):
     n_trials = 100
     for k in klist:
         score_keeper[k] = 0
+        # compute the average silhouette score for k and store in score_keeper
         for i in range(n_trials):
             s = silhouette_score(do_partitioning_cluster(active_sites,k))
             score_keeper[k] = score_keeper.get(k) + (s/n_trials)
     maximum = -np.inf
     n_clusters = 0
+    # find the maximum average silhouette score and use the corresponding k
     for k in score_keeper.keys():
         if score_keeper.get(k) > maximum:
             maximum = score_keeper.get(k)
@@ -57,6 +60,7 @@ def do_partitioning_cluster(active_sites,k):
     """
     min_max = {'lmin' : np.inf, 'lmax' : 0, 'wmin' : np.inf, 'wmax' : 0, 'hmin' : np.inf, 'hmax' : 0}
     # initialize
+    # find bounds for centroids
     for site in active_sites:
         shape = site.get_shape()
         if shape[0] < min_max.get('lmin'):
@@ -71,6 +75,7 @@ def do_partitioning_cluster(active_sites,k):
             min_max['hmin'] = shape[2]
         if shape[2] > min_max.get('hmax'):
             min_max['hmax'] = shape[2]
+    # place centroids randomly within the bounds
     centroids = list()
     for i in range(0,k,1):
         length = (random.random() * (min_max.get('lmax') - min_max.get('lmin'))) + min_max.get('lmin')
@@ -78,6 +83,7 @@ def do_partitioning_cluster(active_sites,k):
         height = (random.random() * (min_max.get('hmax') - min_max.get('hmin'))) + min_max.get('hmin')
         c = (length,width,height)
         centroids.append(c)
+    # use dataframe to keep track of which sites are in which cluster
     cluster_df = pd.DataFrame(columns=('active_site','cluster','name'))
     cluster_df['active_site'] = active_sites
     prev_centroids = list()
@@ -116,6 +122,7 @@ def do_partitioning_cluster(active_sites,k):
                 centroids[i] = (np.mean(lengths),np.mean(widths),np.mean(heights))
             iterations += 1
     clusters = list()
+    # extract clustering information from dataframe and compile into nested list
     for i in range(0,k,1):
         cluster = cluster_df[cluster_df['cluster'] == i]
         clust_list = cluster['active_site'].values.tolist()
@@ -135,9 +142,11 @@ def cluster_hierarchically(active_sites,klist):
     # my hierarchical clustering algorithm does not depend on a stochastic process,
     #   so no repeated trials are needed to determine silhouette score
     score_keeper = dict()
+    # try each number of clusters and track associated silhouette score
     for k in klist:
         s = silhouette_score(do_hierarchical_cluster(active_sites,k))
         score_keeper[k] = s
+    # find the maximum silhouette score and use the corresponding k
     maximum = -np.inf
     n_clusters = 0
     for k in score_keeper.keys():
@@ -167,7 +176,7 @@ def do_hierarchical_cluster(active_sites, k):
     for site_a in active_sites:
         for site_b in active_sites:
             similarity_df[site_a][site_b] = compute_similarity(site_a,site_b)
-    # continue until there is one large cluster
+    # continue until there are k clusters
     while(len(clusters) > k):
         # keep track of which clusters are closest to each other, index of each cluster and similarity
         closest = {'i':0,'j':0,'avg_sim':np.inf}
@@ -198,6 +207,11 @@ def do_hierarchical_cluster(active_sites, k):
     return clusters
     
 def flatten(l):
+    """
+    Get a list of elements in a nested list
+    Input: Nested list of variable depth
+    Output: List of depth one (only elements)
+    """
     flattened_list = list()
     new_list = l.copy()
     for item in new_list:
@@ -216,20 +230,26 @@ def silhouette_score(clustering):
     Output: silhouette score, a number from 0 to 1 where 1 is perfect clustering
     """
     silhouette_list = list()
+    # iterate through active sites by cluster
     for cluster in clustering:
         if (len(flatten(cluster)) <= 1):
             silhouette_list.append(0)
             break
+        # determine other clusters
         other_clusters = clustering.copy()
         other_clusters.remove(cluster)
+        # if there are empty clusters, take them out
         while([] in other_clusters):
             other_clusters.remove([])
+        
         for site_a in flatten(cluster):
+            # calculate similarity with other points in cluster
             cohesion_sum = 0
             for site_b in flatten(cluster):
                 cohesion_sum = cohesion_sum + compute_similarity(site_a,site_b)
             cohesion = cohesion_sum * (1/(len(flatten(cluster))-1))
-        
+            
+            # calculate distance from points in closest neighboring cluster
             separation_list = list()
             for other in other_clusters:
                 separation_sum = 0
@@ -237,8 +257,10 @@ def silhouette_score(clustering):
                     separation_sum = separation_sum + compute_similarity(site_a,site_b)
                 separation_list.append(separation_sum*(1/len(flatten(other))))
             separation = min(separation_list)
+            # calculate silhouette score for this site
             silhouette_score = (separation - cohesion) / (max(separation,cohesion))
             silhouette_list.append(silhouette_score)
+    # take the mean silhouette score over all active sites
     mean_silhouette = np.mean(silhouette_list)
     return mean_silhouette
             
@@ -249,10 +271,16 @@ def jaccard_index(clustering1,clustering2):
             clustering2 : list of two lists of active sites
     Outputs: jaccard index, a measurement of the similarity of the two clusterings
     """
+    # Site in cluster [1] of first clustering? Site in cluster [1] of second clustering?
+    # False,False
     M00 = set(flatten(clustering1[0])).intersection(set(flatten(clustering2[0])))
+    # True, False
     M10 = set(flatten(clustering1[1])).intersection(set(flatten(clustering2[0])))
+    # False, True
     M01 = set(flatten(clustering1[0])).intersection(set(flatten(clustering2[1])))
+    # True, True
     M11 = set(flatten(clustering1[1])).intersection(set(flatten(clustering2[1])))
+    # Jaccard similarity index
     jaccard = len(M11) / (len(M01) + len(M10) + len(M11))
     return jaccard
 
