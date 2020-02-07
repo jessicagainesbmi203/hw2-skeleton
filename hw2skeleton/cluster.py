@@ -35,7 +35,7 @@ def cluster_by_partitioning(active_sites,klist):
         for i in range(n_trials):
             s = silhouette_score(do_partitioning_cluster(active_sites,k))
             score_keeper[k] = score_keeper.get(k) + (s/n_trials)
-    maximum = 0
+    maximum = -np.inf
     n_clusters = 0
     for k in score_keeper.keys():
         if score_keeper.get(k) > maximum:
@@ -138,7 +138,7 @@ def cluster_hierarchically(active_sites,klist):
     for k in klist:
         s = silhouette_score(do_hierarchical_cluster(active_sites,k))
         score_keeper[k] = s
-    maximum = 0
+    maximum = -np.inf
     n_clusters = 0
     for k in score_keeper.keys():
         if score_keeper.get(k) > maximum:
@@ -157,7 +157,6 @@ def do_hierarchical_cluster(active_sites, k):
             (each clustering is a list of lists of Sequence objects)
     """
     # initialize
-    
     clusters = list()
     for site in active_sites:
         site_list = list()
