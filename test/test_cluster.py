@@ -23,8 +23,9 @@ def test_partition_clustering():
         filepath = os.path.join("data", "%i.pdb"%id)
         active_sites.append(io.read_active_site(filepath))
 
-    # update this assertion
-    assert cluster.cluster_by_partitioning(active_sites,2).sort() == [[ActiveSite('276'),ActiveSite('4629')],ActiveSite('10701')]
+    clustering = cluster.cluster_by_partitioning(active_sites,[2])
+    assert get_names(flatten(clustering[0])) in [['276','4629'],['10701']]
+    assert get_names(flatten(clustering[1])) in [['276','4629'],['10701']]
 
 def test_hierarchical_clustering():
     # tractable subset
@@ -35,5 +36,12 @@ def test_hierarchical_clustering():
         filepath = os.path.join("data", "%i.pdb"%id)
         active_sites.append(io.read_active_site(filepath))
 
-    # update this assertion
-#    assert cluster.cluster_hierarchically(active_sites) == []
+    clustering = cluster.cluster_hierarchically(active_sites,[2])
+    assert get_names(flatten(clustering[0])) in [['4629','276'],['10701']]
+    assert get_names(flatten(clustering[1])) in [['4629','276'],['10701']]
+    
+def get_names(li):
+    name_list = list()
+    for active_site in li:
+        name_list.append(active_site.name)
+    return name_list
